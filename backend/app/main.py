@@ -80,6 +80,17 @@ app.include_router(summons_router)
 app.include_router(bills_router)
 
 
+@app.get("/")
+async def root():
+    return {
+        "status": "ok",
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "docs": "/docs",
+        "health": "/api/health",
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok", "app": settings.APP_NAME, "version": settings.APP_VERSION}

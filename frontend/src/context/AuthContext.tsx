@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profile = await api.getMe();
         setUser(profile);
       } catch (err) {
-        console.error("Failed to load user profile:", err);
+        // Token is invalid or expired; silently clear it and reset state
         clearAuthToken();
         setUser(null);
       } finally {

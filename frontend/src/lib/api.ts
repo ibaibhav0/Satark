@@ -330,6 +330,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthToken();
+    }
     let errorDetail = "An error occurred";
     try {
       const err = await response.json();
