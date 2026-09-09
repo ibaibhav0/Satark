@@ -17,23 +17,40 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Determine initial theme from localStorage or system preference
+    // Read from DOM (which was already set by the head anti-flash script) or localStorage
+    const isDark = document.documentElement.classList.contains("dark");
     const stored = localStorage.getItem("satark_theme") as Theme | null;
-    let initialTheme: Theme = "light";
 
     if (stored === "dark" || stored === "light") {
-      initialTheme = stored;
-    } else if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      initialTheme = "dark";
+      setThemeState(stored);
+      if (stored === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } else {
+      setThemeState(isDark ? "dark" : "light");
     }
 
-    setThemeState(initialTheme);
-    if (initialTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
     setMounted(true);
+
+    // Listen to OS theme changes if user hasn't set explicit preference
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      const currentStored = localStorage.getItem("satark_theme");
+      if (!currentStored) {
+        const newTheme: Theme = e.matches ? "dark" : "light";
+        setThemeState(newTheme);
+        if (newTheme === "dark") {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   const setTheme = (newTheme: Theme) => {
@@ -47,12 +64,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
+    const currentTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+    const nextTheme = currentTheme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme: mounted ? theme : "light", toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

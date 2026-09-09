@@ -387,7 +387,7 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -395,17 +395,17 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-16 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-800">Project Not Found or Access Forbidden</h2>
-          <p className="text-slate-600 text-sm mt-2">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">Project Not Found or Access Forbidden</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
             You may not have the authorized permissions to inspect this MPLADS asset.
           </p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 mt-6 px-4 py-2 bg-indigo-600 text-white rounded text-sm font-medium"
+            className="inline-flex items-center gap-2 mt-6 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium transition-colors"
           >
             Return to Dashboard
           </Link>
