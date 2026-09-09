@@ -445,8 +445,8 @@ export default function ProjectsPage() {
                     <input
                       type="number"
                       step="any"
-                      value={formData.latitude}
-                      onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
+                      value={isNaN(formData.latitude) ? "" : formData.latitude}
+                      onChange={(e) => setFormData({ ...formData, latitude: e.target.value === "" ? NaN : parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded text-sm text-slate-900 dark:text-white"
                       required
                     />
@@ -456,8 +456,8 @@ export default function ProjectsPage() {
                     <input
                       type="number"
                       step="any"
-                      value={formData.longitude}
-                      onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
+                      value={isNaN(formData.longitude) ? "" : formData.longitude}
+                      onChange={(e) => setFormData({ ...formData, longitude: e.target.value === "" ? NaN : parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded text-sm text-slate-900 dark:text-white"
                       required
                     />
@@ -466,8 +466,8 @@ export default function ProjectsPage() {
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">Geofence Radius (m)</label>
                     <input
                       type="number"
-                      value={formData.inspection_radius_m}
-                      onChange={(e) => setFormData({ ...formData, inspection_radius_m: parseInt(e.target.value) })}
+                      value={isNaN(formData.inspection_radius_m) ? "" : formData.inspection_radius_m}
+                      onChange={(e) => setFormData({ ...formData, inspection_radius_m: e.target.value === "" ? NaN : parseInt(e.target.value) })}
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded text-sm text-slate-900 dark:text-white"
                       required
                     />
@@ -479,8 +479,8 @@ export default function ProjectsPage() {
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">Sanction Amount (₹)</label>
                     <input
                       type="number"
-                      value={formData.sanction_amount}
-                      onChange={(e) => setFormData({ ...formData, sanction_amount: parseFloat(e.target.value) })}
+                      value={isNaN(formData.sanction_amount) ? "" : formData.sanction_amount}
+                      onChange={(e) => setFormData({ ...formData, sanction_amount: e.target.value === "" ? NaN : parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded text-sm text-slate-900 dark:text-white"
                       required
                     />
