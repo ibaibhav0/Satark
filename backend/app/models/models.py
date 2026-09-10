@@ -144,6 +144,8 @@ class Project(Base):
     # Status
     status = Column(Enum(ProjectStatus), default=ProjectStatus.DRAFT, nullable=False, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False)
+    peer_acceptance_required = Column(Boolean, default=False, nullable=False)
+    peer_acceptance_status = Column(String(50), nullable=True)  # None, "pending", "accepted", "rejected"
 
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
@@ -273,6 +275,16 @@ class EvidenceAnalysis(Base):
     # Overall assessment
     overall_risk = Column(Float, nullable=True)
     analysis_metadata = Column(JSON, nullable=True)
+
+    # Work photo scene verification & peer acceptance
+    is_work_photo = Column(Boolean, default=True, nullable=False)
+    detected_category = Column(String(100), default="infrastructure", nullable=True)
+    work_match_confidence = Column(Float, default=95.0, nullable=True)
+    requires_peer_acceptance = Column(Boolean, default=False, nullable=False)
+    peer_accepted = Column(Boolean, nullable=True)
+    peer_inspector_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    peer_notes = Column(String(1000), nullable=True)
+    peer_reviewed_at = Column(DateTime(timezone=True), nullable=True)
 
     is_mock = Column(Boolean, default=False, nullable=False)
     processed_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)

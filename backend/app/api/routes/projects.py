@@ -101,6 +101,8 @@ async def _build_project_response(project: Project, db: AsyncSession) -> Project
         current_inspector_name=inspector_name,
         latest_risk_score=risk.overall_score if risk else None,
         last_inspection_date=last_insp.started_at.isoformat() if last_insp else None,
+        peer_acceptance_required=bool(getattr(project, "peer_acceptance_required", False)),
+        peer_acceptance_status=getattr(project, "peer_acceptance_status", None),
     )
 
 
@@ -347,6 +349,26 @@ async def request_project_completion(
     )
     if not assignment.scalar_one_or_none():
         raise HTTPException(status_code=403, detail="You are not assigned to this project")
+
+    # Enforce: Check if any evidence requires peer acceptance and has not been approved
+    from app.models.models import EvidenceAnalysis, Evidence
+    peer_check = await db.execute(
+        select(Evidence, EvidenceAnalysis)
+        .join(EvidenceAnalysis, Evidence.id == EvidenceAnalysis.evidence_id)
+        .where(
+            Evidence.project_id == project.id,
+            EvidenceAnalysis.requires_peer_acceptance == True,
+            (EvidenceAnalysis.peer_accepted == None) | (EvidenceAnalysis.peer_accepted == False)
+        )
+    )
+    unaccepted_item = peer_check.first()
+    if unaccepted_item:
+        ev, an = unaccepted_item
+        cat = an.detected_category or "selfie / non-work photo"
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot mark project as completed: Evidence '{ev.evidence_code}' was flagged by AI as {cat} instead of project work. It requires acceptance from another field inspector before completion can proceed."
+        )
 
     prev_status = project.status.value
     project.status = ProjectStatus.COMPLETION_REQUESTED

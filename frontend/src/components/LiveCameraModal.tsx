@@ -98,6 +98,11 @@ export function LiveCameraModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Scene type hint for AI work-photo classification
+  const [sceneType, setSceneType] = useState<"work_site" | "selfie" | "other">("work_site");
+  // AI classification result for last uploaded photo
+  interface AIClassResult { is_work_photo: boolean; detected_category: string | null; confidence: number | null; requires_peer: boolean; }
+  const [lastAIResult, setLastAIResult] = useState<AIClassResult | null>(null);
 
   // Initialize or ensure active inspection exists
   const ensureInspection = async (lat: number, lng: number, accuracy: number): Promise<string> => {
@@ -237,6 +242,7 @@ export function LiveCameraModal({
     try {
       setUploadStatus("uploading");
       setErrorMessage(null);
+      setLastAIResult(null);
 
       const lat = gpsPosition?.lat || project.latitude;
       const lng = gpsPosition?.lng || project.longitude;
@@ -262,8 +268,19 @@ export function LiveCameraModal({
       formData.append("gps_accuracy", accuracy.toString());
       formData.append("sha256_hash", hash);
       formData.append("device_info", navigator.userAgent);
+      // Pass scene classification hints to AI pipeline
+      formData.append("is_selfie", (sceneType === "selfie").toString());
+      formData.append("scene_hint", sceneType === "selfie" ? "selfie" : sceneType === "other" ? "non_work" : "");
 
       const res = await api.uploadEvidence(activeInspId, formData);
+
+      // Store AI classification result for display
+      setLastAIResult({
+        is_work_photo: res.is_work_photo ?? true,
+        detected_category: res.detected_category ?? null,
+        confidence: res.work_match_confidence ?? null,
+        requires_peer: res.requires_peer_acceptance ?? false,
+      });
 
       setCapturedImages((prev) => [
         ...prev,
@@ -539,6 +556,29 @@ export function LiveCameraModal({
                   </div>
                 )}
 
+                {/* Scene Type Selector (shown only when inside geofence) */}
+                {isWithinGeofence && (
+                  <div className="absolute bottom-16 left-0 right-0 flex items-center justify-center gap-2 z-10 px-4">
+                    <span className="text-[10px] font-semibold text-white/80 uppercase tracking-wide">Photo Type:</span>
+                    {(["work_site", "selfie", "other"] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setSceneType(type)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all cursor-pointer ${
+                          sceneType === type
+                            ? type === "work_site"
+                              ? "bg-emerald-500 text-white shadow-md"
+                              : "bg-red-500 text-white shadow-md"
+                            : "bg-slate-900/70 text-white/70 hover:bg-slate-800/90"
+                        }`}
+                      >
+                        {type === "work_site" ? "✓ Work Site" : type === "selfie" ? "⚠ Selfie" : "Other"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Capture Trigger Button */}
                 <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 z-10">
                   <button
@@ -559,12 +599,12 @@ export function LiveCameraModal({
                     ) : uploadStatus === "uploading" ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Hashing & Verifying Evidence...</span>
+                        <span>Analysing &amp; Uploading Evidence...</span>
                       </>
                     ) : uploadStatus === "success" ? (
                       <>
                         <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                        <span>Captured & Cryptographically Sealed!</span>
+                        <span>Captured &amp; Cryptographically Sealed!</span>
                       </>
                     ) : (
                       <>
@@ -577,6 +617,33 @@ export function LiveCameraModal({
               </div>
             )}
           </div>
+
+          {/* AI Classification Result Banner */}
+          {lastAIResult && (
+            <div className={`p-3 rounded-lg border text-xs flex items-start gap-2.5 ${
+              lastAIResult.requires_peer
+                ? "bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300"
+                : "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-300"
+            }`}>
+              {lastAIResult.requires_peer ? (
+                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
+              ) : (
+                <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
+              )}
+              <div>
+                <div className="font-bold">
+                  {lastAIResult.requires_peer
+                    ? "⚠ Non-Work Photo Detected — Peer Inspector Acceptance Required"
+                    : `✓ AI Verified: Work Site Photo (${lastAIResult.detected_category || "infrastructure"} · Confidence ${lastAIResult.confidence?.toFixed(1)}%)`}
+                </div>
+                {lastAIResult.requires_peer && (
+                  <p className="mt-0.5 text-[11px]">
+                    AI Scene Classifier detected this image does not depict project work ({project.project_type}). Another field inspector must accept this photo before the project can be marked complete. A critical alert has been raised.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Upload Status & Error Banner */}
           {errorMessage && (

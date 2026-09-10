@@ -65,11 +65,17 @@ class InspectionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PeerAcceptanceRequest(BaseModel):
+    accepted: bool
+    notes: str | None = None
+
+
 class EvidenceResponse(BaseModel):
     id: str
     evidence_code: str
     project_id: str
     inspection_id: str
+    inspector_user_id: str | None = None
     capture_timestamp: str
     capture_latitude: float
     capture_longitude: float
@@ -82,7 +88,58 @@ class EvidenceResponse(BaseModel):
     storage_key: str
     created_at: str
 
+    # Work photo classification & peer review
+    is_work_photo: bool = True
+    detected_category: str | None = None
+    work_match_confidence: float | None = None
+    requires_peer_acceptance: bool = False
+    peer_accepted: bool | None = None
+    peer_inspector_id: str | None = None
+    peer_inspector_name: str | None = None
+    peer_notes: str | None = None
+    peer_reviewed_at: str | None = None
+
     model_config = {"from_attributes": True}
+
+
+async def _build_evidence_response(e: Evidence, db: AsyncSession) -> EvidenceResponse:
+    from app.models.models import EvidenceAnalysis
+    a_res = await db.execute(select(EvidenceAnalysis).where(EvidenceAnalysis.evidence_id == e.id))
+    analysis = a_res.scalar_one_or_none()
+
+    peer_name = None
+    if analysis and analysis.peer_inspector_id:
+        u_res = await db.execute(select(User).where(User.id == analysis.peer_inspector_id))
+        u = u_res.scalar_one_or_none()
+        peer_name = u.full_name if u else None
+
+    return EvidenceResponse(
+        id=str(e.id),
+        evidence_code=e.evidence_code,
+        project_id=str(e.project_id),
+        inspection_id=str(e.inspection_id),
+        inspector_user_id=str(e.inspector_user_id) if e.inspector_user_id else None,
+        capture_timestamp=e.capture_timestamp.isoformat(),
+        capture_latitude=e.capture_latitude,
+        capture_longitude=e.capture_longitude,
+        gps_accuracy=e.gps_accuracy,
+        distance_from_project=e.distance_from_project,
+        is_within_geofence=e.is_within_geofence,
+        sha256_hash=e.sha256_hash,
+        status=e.status.value,
+        file_name=e.file_name,
+        storage_key=e.storage_key,
+        created_at=e.created_at.isoformat(),
+        is_work_photo=analysis.is_work_photo if analysis else True,
+        detected_category=analysis.detected_category if analysis else "infrastructure",
+        work_match_confidence=analysis.work_match_confidence if analysis else 95.0,
+        requires_peer_acceptance=analysis.requires_peer_acceptance if analysis else False,
+        peer_accepted=analysis.peer_accepted if analysis else None,
+        peer_inspector_id=analysis.peer_inspector_id if analysis else None,
+        peer_inspector_name=peer_name,
+        peer_notes=analysis.peer_notes if analysis else None,
+        peer_reviewed_at=analysis.peer_reviewed_at.isoformat() if analysis and analysis.peer_reviewed_at else None,
+    )
 
 
 class SubmitInspectionRequest(BaseModel):
@@ -165,6 +222,8 @@ async def upload_evidence(
     gps_accuracy: float | None = Form(None),
     sha256_hash: str | None = Form(None),
     device_info: str | None = Form(None),
+    is_selfie: bool | None = Form(None),
+    scene_hint: str | None = Form(None),
 ):
     """Upload evidence for an active inspection with GPS validation and SHA-256 integrity."""
     # Validate inspection
@@ -232,6 +291,13 @@ async def upload_evidence(
     else:
         cap_ts = datetime.now(timezone.utc)
 
+    # Build device info dictionary — carries work-photo classification hints to AI pipeline
+    dev_dict: dict = {"raw": device_info} if device_info else {}
+    if is_selfie is not None:
+        dev_dict["is_selfie"] = bool(is_selfie)
+    if scene_hint:
+        dev_dict["scene_hint"] = scene_hint
+
     evidence = Evidence(
         evidence_code=evidence_code,
         project_id=project.id,
@@ -249,10 +315,16 @@ async def upload_evidence(
         distance_from_project=distance,
         is_within_geofence=within_fence,
         status=EvidenceStatus.CAPTURED if within_fence else EvidenceStatus.FLAGGED,
-        device_info={"raw": device_info} if device_info else None,
+        device_info=dev_dict,
     )
     db.add(evidence)
     await db.flush()
+
+    # Automatically run AI forensics & work photo scene classification
+    try:
+        await analyze_project_evidence(evidence, project, db)
+    except Exception:
+        pass
 
     inspection.status = InspectionStatus.EVIDENCE_COLLECTED
 
@@ -271,23 +343,7 @@ async def upload_evidence(
         new_value={"hash": file_hash, "geofence": within_fence, "distance": distance},
     )
 
-    return EvidenceResponse(
-        id=str(evidence.id),
-        evidence_code=evidence.evidence_code,
-        project_id=str(evidence.project_id),
-        inspection_id=str(evidence.inspection_id),
-        capture_timestamp=evidence.capture_timestamp.isoformat(),
-        capture_latitude=evidence.capture_latitude,
-        capture_longitude=evidence.capture_longitude,
-        gps_accuracy=evidence.gps_accuracy,
-        distance_from_project=evidence.distance_from_project,
-        is_within_geofence=evidence.is_within_geofence,
-        sha256_hash=evidence.sha256_hash,
-        status=evidence.status.value,
-        file_name=evidence.file_name,
-        storage_key=evidence.storage_key,
-        created_at=evidence.created_at.isoformat(),
-    )
+    return await _build_evidence_response(evidence, db)
 
 
 @router.post("/{inspection_id}/submit", response_model=InspectionResponse)
@@ -420,26 +476,109 @@ async def get_inspection_evidence(
     )
     items = result.scalars().all()
 
-    return [
-        EvidenceResponse(
-            id=str(e.id),
-            evidence_code=e.evidence_code,
-            project_id=str(e.project_id),
-            inspection_id=str(e.inspection_id),
-            capture_timestamp=e.capture_timestamp.isoformat(),
-            capture_latitude=e.capture_latitude,
-            capture_longitude=e.capture_longitude,
-            gps_accuracy=e.gps_accuracy,
-            distance_from_project=e.distance_from_project,
-            is_within_geofence=e.is_within_geofence,
-            sha256_hash=e.sha256_hash,
-            status=e.status.value,
-            file_name=e.file_name,
-            storage_key=e.storage_key,
-            created_at=e.created_at.isoformat(),
+    return [await _build_evidence_response(e, db) for e in items]
+
+
+@router.get("/project/{project_id}/evidence", response_model=list[EvidenceResponse])
+async def get_all_project_evidence(
+    project_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Get all evidence uploaded across all inspections for a project."""
+    await verify_inspector_project_access(project_id, current_user, db)
+
+    result = await db.execute(
+        select(Evidence).where(Evidence.project_id == project_id).order_by(Evidence.created_at.desc())
+    )
+    items = result.scalars().all()
+    return [await _build_evidence_response(e, db) for e in items]
+
+
+@router.post("/evidence/{evidence_id}/peer-accept", response_model=EvidenceResponse)
+async def peer_accept_evidence(
+    evidence_id: str,
+    body: PeerAcceptanceRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """
+    Peer Inspector Acceptance endpoint.
+    Another field inspector (or admin/officer) verifies and accepts/rejects
+    flagged work photo evidence so the project can proceed to completion.
+    """
+    from app.models.models import EvidenceAnalysis
+    ev_result = await db.execute(select(Evidence).where(Evidence.id == evidence_id))
+    evidence = ev_result.scalar_one_or_none()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+
+    # Prevent self-acceptance by the same field inspector who captured it
+    if current_user.role == UserRole.FIELD_INSPECTOR and evidence.inspector_user_id == current_user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot peer-accept your own uploaded photo. Another field inspector must verify and accept it.",
         )
-        for e in items
-    ]
+
+    # Get analysis
+    an_result = await db.execute(select(EvidenceAnalysis).where(EvidenceAnalysis.evidence_id == evidence.id))
+    analysis = an_result.scalar_one_or_none()
+    if not analysis:
+        raise HTTPException(status_code=400, detail="Evidence has not been analyzed by AI yet")
+
+    analysis.peer_accepted = body.accepted
+    analysis.peer_inspector_id = current_user.id
+    analysis.peer_notes = body.notes
+    analysis.peer_reviewed_at = datetime.now(timezone.utc)
+
+    # Update project status
+    proj_result = await db.execute(select(Project).where(Project.id == evidence.project_id))
+    project = proj_result.scalar_one()
+
+    # Re-check all flagged evidence for this project
+    all_flagged_res = await db.execute(
+        select(EvidenceAnalysis)
+        .join(Evidence, Evidence.id == EvidenceAnalysis.evidence_id)
+        .where(
+            Evidence.project_id == project.id,
+            EvidenceAnalysis.requires_peer_acceptance == True,
+        )
+    )
+    flagged_list = all_flagged_res.scalars().all()
+    if all(fa.peer_accepted is True for fa in flagged_list):
+        project.peer_acceptance_status = "accepted"
+    elif any(fa.peer_accepted is False for fa in flagged_list):
+        project.peer_acceptance_status = "rejected"
+    else:
+        project.peer_acceptance_status = "pending"
+
+    # Add ProjectEvent
+    decision_text = "Accepted" if body.accepted else "Rejected"
+    db.add(ProjectEvent(
+        project_id=project.id,
+        event_type="peer_evidence_reviewed",
+        title=f"Work Photo Peer Review: {decision_text}",
+        description=f"Field Inspector {current_user.full_name} ({current_user.inspector_id or current_user.role.value}) {decision_text.lower()} evidence {evidence.evidence_code}. Notes: {body.notes or 'No notes provided'}",
+        actor_id=current_user.id,
+        metadata_={
+            "evidence_id": str(evidence.id),
+            "evidence_code": evidence.evidence_code,
+            "accepted": body.accepted,
+            "peer_inspector": current_user.full_name,
+        },
+    ))
+
+    await log_audit(
+        db,
+        actor=current_user,
+        action="peer_review_evidence",
+        entity_type="evidence",
+        entity_id=str(evidence.id),
+        new_value={"accepted": body.accepted, "notes": body.notes},
+    )
+
+    await db.flush()
+    return await _build_evidence_response(evidence, db)
 
 
 @router.get("/evidence-file/{storage_key:path}")

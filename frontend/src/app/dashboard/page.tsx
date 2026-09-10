@@ -206,12 +206,12 @@ export default function DashboardPage() {
               </h1>
               <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
                 {user.role === "field_inspector"
-                  ? `Assigned Inspector ID: ${user.inspector_id} • Strictly scoped to authorized projects`
+                  ? `Inspector ID: ${user.inspector_id} · ${user.district || "District"} · Scope restricted to assigned project sites only`
                   : user.role === "district_officer"
-                  ? `Jurisdiction: ${user.district} • District-level forensic monitoring`
+                  ? `Jurisdiction: ${user.district} · District-level MPLADS monitoring under MOSPI/DPA 2024-25`
                   : user.role === "auditor"
-                  ? "System-wide audit trail access • Compliance monitoring"
-                  : `Jurisdiction: All Districts • SATARK Forensic Monitoring Hub`}
+                  ? "System-wide audit trail access · MPLADS Compliance & CAG Reporting View"
+                  : `All Districts · SATARK Centralised MPLADS Monitoring Platform · FY 2024-25`}
               </p>
             </div>
 
@@ -765,14 +765,21 @@ export default function DashboardPage() {
             <div className="bg-slate-900 dark:bg-slate-800/90 text-white rounded-lg p-6 shadow-xs border border-slate-800 dark:border-slate-700">
               <div className="flex items-center gap-2 text-indigo-400 mb-2">
                 <ShieldCheck className="w-5 h-5" />
-                <span className="text-xs font-bold uppercase tracking-wider">SATARK Integrity Guard</span>
+                <span className="text-xs font-bold uppercase tracking-wider">SATARK Integrity Framework</span>
               </div>
               <h3 className="text-sm font-bold text-white mb-2">
-                SHA-256 Geofenced Physical Verification
+                SHA-256 Geofenced Evidence Verification
               </h3>
               <p className="text-xs text-slate-300 dark:text-slate-300 leading-relaxed">
-                All field captures are cryptographically hashed and verified against hardware GPS boundaries. Any deviation beyond the project radius automatically flags an inquiry directive.
+                Every field capture is cryptographically hashed (SHA-256) and GPS-validated against site boundaries. Evidence captured outside the project geofence radius is automatically escalated. Implements MoSPI MPLADS Monitoring Guidelines 2024 &amp; NIC Digital Evidence Standards.
               </p>
+              <div className="mt-3 pt-3 border-t border-slate-800 dark:border-slate-700 flex items-center gap-2 text-[10px] text-slate-500">
+                <span className="font-mono">NIC-SATARK v1.0</span>
+                <span>·</span>
+                <span>MoSPI / DPA</span>
+                <span>·</span>
+                <span>MPLADS Act 1993 (Amended 2023)</span>
+              </div>
             </div>
           </div>
         </div>

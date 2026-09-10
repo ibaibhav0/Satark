@@ -40,7 +40,7 @@ export default function ProjectsPage() {
   const [showModal, setShowModal] = useState(false);
   const [inspectors, setInspectors] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    project_code: `MPLADS-KA-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+    project_code: `MPLADS/2024-25/KA/BN-01/${Math.floor(1000 + Math.random() * 9000)}`,
     name: "",
     description: "",
     project_type: "road",
@@ -231,8 +231,14 @@ export default function ProjectsPage() {
             >
               <option value="">All Districts</option>
               <option value="Bengaluru Urban">Bengaluru Urban</option>
+              <option value="Bengaluru Rural">Bengaluru Rural</option>
               <option value="Mysuru">Mysuru</option>
               <option value="Hyderabad">Hyderabad</option>
+              <option value="Tumakuru">Tumakuru</option>
+              <option value="Shivamogga">Shivamogga</option>
+              <option value="Belagavi">Belagavi</option>
+              <option value="Dharwad">Dharwad</option>
+              <option value="Mangaluru">Mangaluru</option>
             </select>
 
             <select

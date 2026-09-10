@@ -89,6 +89,8 @@ class ProjectResponse(BaseModel):
     current_inspector_name: str | None = None
     latest_risk_score: float | None = None
     last_inspection_date: str | None = None
+    peer_acceptance_required: bool = False
+    peer_acceptance_status: str | None = None
 
     model_config = {"from_attributes": True}
 

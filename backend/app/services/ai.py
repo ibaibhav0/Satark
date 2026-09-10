@@ -54,11 +54,19 @@ async def analyze_project_evidence(
     db: AsyncSession,
 ) -> EvidenceAnalysis:
     """Run full AI pipeline for newly submitted evidence."""
-    # 1. Forensics
+    # 1. Forensics with project type and scene metadata
+    device_info = evidence.device_info or {}
     file_path = str(settings.evidence_storage / evidence.storage_key)
+    proj_type_str = project.project_type.value if hasattr(project.project_type, "value") else str(project.project_type)
     forensics: ForensicsResult = await forensics_provider.analyze_image(
         file_path,
-        metadata={"distance": evidence.distance_from_project, "geofence": evidence.is_within_geofence}
+        metadata={
+            "distance": evidence.distance_from_project,
+            "geofence": evidence.is_within_geofence,
+            "project_type": proj_type_str,
+            "scene_hint": device_info.get("scene_hint", ""),
+            "is_selfie": device_info.get("is_selfie", False),
+        }
     )
 
     # 2. Similarity search against historical evidence pool
@@ -98,6 +106,10 @@ async def analyze_project_evidence(
             duplicate_matches=[m.model_dump() for m in similarity.matches],
             overall_risk=max(forensics.risk_score, similarity.max_similarity),
             analysis_metadata={"summary": forensics.summary, "similarity_summary": similarity.summary},
+            is_work_photo=forensics.is_work_photo,
+            detected_category=forensics.detected_category,
+            work_match_confidence=forensics.work_match_confidence,
+            requires_peer_acceptance=forensics.requires_peer_acceptance,
             is_mock=True,
         )
         db.add(analysis)
@@ -107,6 +119,34 @@ async def analyze_project_evidence(
         analysis.duplicate_score = similarity.max_similarity
         analysis.duplicate_matches = [m.model_dump() for m in similarity.matches]
         analysis.overall_risk = max(forensics.risk_score, similarity.max_similarity)
+        analysis.is_work_photo = forensics.is_work_photo
+        analysis.detected_category = forensics.detected_category
+        analysis.work_match_confidence = forensics.work_match_confidence
+        analysis.requires_peer_acceptance = forensics.requires_peer_acceptance
+
+    # Handle Non-work photo / selfie requirement for peer acceptance
+    if forensics.requires_peer_acceptance:
+        project.peer_acceptance_required = True
+        if project.peer_acceptance_status != "accepted":
+            project.peer_acceptance_status = "pending"
+        
+        # Generate critical alert for non-work photo
+        alert_code = f"ALT-{evidence.evidence_code[-4:]}-WRK"
+        wrk_alert = Alert(
+            alert_code=alert_code,
+            project_id=project.id,
+            alert_type=AlertType.EVIDENCE_MANIPULATION,
+            severity=AlertSeverity.CRITICAL,
+            title="Non-Work Photo Detected (Selfie/Mismatch) — Peer Acceptance Required",
+            description=forensics.summary,
+            evidence_data={
+                "evidence_id": str(evidence.id),
+                "detected_category": forensics.detected_category,
+                "confidence": forensics.work_match_confidence,
+                "requires_peer_acceptance": True,
+            },
+        )
+        db.add(wrk_alert)
 
     # Generate alerts if threshold exceeded
     if similarity.potential_reuse_detected:
@@ -122,7 +162,7 @@ async def analyze_project_evidence(
         )
         db.add(dup_alert)
 
-    if forensics.risk_score >= 70:
+    if forensics.risk_score >= 70 and not forensics.requires_peer_acceptance:
         alert_code = f"ALT-{evidence.evidence_code[-4:]}-FOR"
         for_alert = Alert(
             alert_code=alert_code,

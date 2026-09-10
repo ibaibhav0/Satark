@@ -69,19 +69,25 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           {/* Logo & Platform Name */}
           <div className="flex items-center">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/60 transition-colors">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  SATARK
-                </span>
-                <span className="text-xs bg-indigo-600 text-white px-1.5 py-0.5 rounded ml-1.5 font-semibold">
-                  MPLADS
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                    SATARK
+                  </span>
+                  <span className="text-xs bg-indigo-600 text-white px-1.5 py-0.5 rounded font-semibold">
+                    MPLADS
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-tight hidden sm:block">
+                  Ministry of Statistics &amp; Programme Implementation · NIC · FY 2024-25
+                </div>
               </div>
             </Link>
+
 
             {/* Navigation links */}
             <div className="hidden md:flex ml-8 space-x-1">

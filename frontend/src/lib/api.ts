@@ -133,7 +133,18 @@ export interface EvidenceItem {
   file_name: string;
   storage_key: string;
   created_at: string;
+  // Work-photo AI classification fields
+  is_work_photo?: boolean;
+  detected_category?: string | null;
+  work_match_confidence?: number | null;
+  requires_peer_acceptance?: boolean;
+  peer_accepted?: boolean | null;
+  peer_inspector_id?: string | null;
+  peer_inspector_name?: string | null;
+  peer_notes?: string | null;
+  peer_reviewed_at?: string | null;
 }
+
 
 export interface EvidenceAnalysisItem {
   id: string;

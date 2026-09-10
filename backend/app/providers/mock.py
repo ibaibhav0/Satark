@@ -28,12 +28,44 @@ class MockImageForensicsProvider(ImageForensicsProvider):
     async def analyze_image(self, file_path: str, metadata: dict[str, Any] | None = None) -> ForensicsResult:
         meta = metadata or {}
         is_suspicious = meta.get("force_suspicious", False)
+        project_type = meta.get("project_type", "infrastructure")
+        scene_hint = meta.get("scene_hint", "").lower()
+        file_lower = file_path.lower()
 
-        if is_suspicious or "suspicious" in file_path.lower():
+        # Check for selfie or non-work photo simulation/detection
+        is_selfie = (
+            meta.get("is_selfie", False)
+            or scene_hint in ("selfie", "person", "portrait", "non_work", "avatar")
+            or any(term in file_lower for term in ("selfie", "portrait", "face", "avatar", "non_work", "dummy"))
+        )
+
+        if is_selfie:
+            return ForensicsResult(
+                risk_score=82.0,
+                risk_level="high",
+                indicators=[
+                    {"name": "AI Scene Classification", "status": "FLAGGED", "detail": f"Detected personal selfie/portrait. Image does NOT depict project works ({project_type}). Peer acceptance from another inspector required."},
+                    {"name": "Metadata Consistency", "status": "WARNING", "detail": "Front-facing camera metadata detected without wide-angle work field of view"},
+                    {"name": "Error Level Analysis (ELA)", "status": "PASS", "detail": "Compression grid normal but subject matter non-compliant"},
+                    {"name": "C2PA Provenance", "status": "ABSENT", "detail": "No hardware site attestation manifest found"},
+                    {"name": "Physical Consistency", "status": "FLAGGED", "detail": "Facial features detected in foreground; absent expected construction/project scene"},
+                ],
+                c2pa_present=False,
+                metadata_intact=True,
+                manipulation_probability=0.74,
+                summary=f"Non-work photo detected: AI Vision identified a personal selfie/portrait instead of expected project infrastructure ({project_type}). Requires peer acceptance from another inspector before work can be marked as completed.",
+                is_work_photo=False,
+                detected_category="inspector_selfie",
+                work_match_confidence=18.5,
+                requires_peer_acceptance=True,
+                peer_review_reason=f"AI Scene Classifier flagged uploaded image as personal selfie/portrait. Work category mismatch ({project_type}). Peer inspector acceptance required before project completion.",
+            )
+        elif is_suspicious or "suspicious" in file_lower:
             return ForensicsResult(
                 risk_score=88.5,
                 risk_level="high",
                 indicators=[
+                    {"name": "AI Scene Classification", "status": "PASS", "detail": f"Scene matches project category ({project_type})"},
                     {"name": "Metadata Consistency", "status": "FLAGGED", "detail": "EXIF capture date inconsistent with upload timestamp"},
                     {"name": "Error Level Analysis (ELA)", "status": "ANOMALY", "detail": "Localized compression artifacts detected in central quadrant"},
                     {"name": "C2PA Provenance", "status": "ABSENT", "detail": "No cryptographic provenance manifest found"},
@@ -43,12 +75,18 @@ class MockImageForensicsProvider(ImageForensicsProvider):
                 metadata_intact=False,
                 manipulation_probability=0.82,
                 summary="Image authenticity anomaly detected — localized compression and shadow vector mismatch require review.",
+                is_work_photo=True,
+                detected_category=str(project_type),
+                work_match_confidence=88.0,
+                requires_peer_acceptance=False,
+                peer_review_reason=None,
             )
         else:
             return ForensicsResult(
                 risk_score=14.0,
                 risk_level="low",
                 indicators=[
+                    {"name": "AI Scene Classification", "status": "PASS", "detail": f"Scene verified: Valid infrastructure work matching project type ({project_type})"},
                     {"name": "Metadata Consistency", "status": "PASS", "detail": "EXIF camera parameters and timestamps verified"},
                     {"name": "Error Level Analysis (ELA)", "status": "PASS", "detail": "Uniform compression grid observed"},
                     {"name": "C2PA Provenance", "status": "VERIFIED", "detail": "Hardware camera attestation signature verified"},
@@ -57,7 +95,12 @@ class MockImageForensicsProvider(ImageForensicsProvider):
                 c2pa_present=True,
                 metadata_intact=True,
                 manipulation_probability=0.06,
-                summary="Evidence integrity verified — image authenticity markers within normal parameters.",
+                summary=f"Evidence integrity verified — AI Scene Classification confirmed genuine {project_type} work site photo.",
+                is_work_photo=True,
+                detected_category=str(project_type),
+                work_match_confidence=97.2,
+                requires_peer_acceptance=False,
+                peer_review_reason=None,
             )
 
 

@@ -22,6 +22,11 @@ class ForensicsResult(BaseModel):
     metadata_intact: bool = True
     manipulation_probability: float = 0.0
     summary: str
+    is_work_photo: bool = True
+    detected_category: str = "infrastructure"
+    work_match_confidence: float = 95.0
+    requires_peer_acceptance: bool = False
+    peer_review_reason: str | None = None
 
 
 class SimilarityMatch(BaseModel):
