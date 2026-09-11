@@ -61,12 +61,13 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 shadow-xs transition-colors duration-150">
-      {/* Top tricolor stripe */}
-      <div className="h-1 bg-gradient-to-r from-orange-500 via-white to-green-600"></div>
+    <div className="fixed top-0 inset-x-0 z-50 p-4 pointer-events-none">
+      <nav className="pointer-events-auto max-w-7xl mx-auto bg-white/70 dark:bg-[#0a0f1c]/70 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-all duration-300 relative overflow-hidden">
+        {/* Subtle top glow line */}
+        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
           {/* Logo & Platform Name */}
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
@@ -93,10 +94,10 @@ export function Navbar() {
             <div className="hidden md:flex ml-8 space-x-1">
               <Link
                 href="/dashboard"
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   pathname === "/dashboard"
-                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold"
-                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                    ? "bg-white dark:bg-slate-800 shadow-sm border border-slate-200/50 dark:border-white/5 text-cyan-600 dark:text-cyan-400"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -105,10 +106,10 @@ export function Navbar() {
 
               <Link
                 href="/projects"
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   pathname?.startsWith("/projects")
-                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold"
-                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                    ? "bg-white dark:bg-slate-800 shadow-sm border border-slate-200/50 dark:border-white/5 text-cyan-600 dark:text-cyan-400"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                 }`}
               >
                 <FolderKanban className="w-4 h-4" />
@@ -118,10 +119,10 @@ export function Navbar() {
               {isInspector && (
                 <Link
                   href="/inspections"
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     pathname?.startsWith("/inspections")
-                      ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      ? "bg-white dark:bg-slate-800 shadow-sm border border-slate-200/50 dark:border-white/5 text-cyan-600 dark:text-cyan-400"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                   }`}
                 >
                   <FileCheck className="w-4 h-4" />
@@ -132,10 +133,10 @@ export function Navbar() {
               {(isAdmin || isOfficer) && (
                 <Link
                   href="/alerts"
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     pathname?.startsWith("/alerts")
-                      ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      ? "bg-white dark:bg-slate-800 shadow-sm border border-slate-200/50 dark:border-white/5 text-cyan-600 dark:text-cyan-400"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                   }`}
                 >
                   <AlertTriangle className="w-4 h-4" />
@@ -146,10 +147,10 @@ export function Navbar() {
               {(isAdmin || isAuditor) && (
                 <Link
                   href="/audit"
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     pathname?.startsWith("/audit")
-                      ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      ? "bg-white dark:bg-slate-800 shadow-sm border border-slate-200/50 dark:border-white/5 text-cyan-600 dark:text-cyan-400"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                   }`}
                 >
                   <History className="w-4 h-4" />
@@ -161,38 +162,35 @@ export function Navbar() {
 
           {/* User & Theme Toggle & Logout */}
           <div className="flex items-center gap-3">
-            <div className="hidden sm:block text-right">
-              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {user.full_name}
-              </div>
-              <div className="mt-0.5">{getRoleBadge()}</div>
-            </div>
-
-            {/* Dark / Light Mode Switcher */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              aria-label="Toggle Theme"
+              className="p-2 rounded-full border border-slate-200 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer"
+              title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
             >
-              {theme === "dark" ? (
-                <Sun className="w-5 h-5 text-amber-400 hover:text-amber-300 transition-transform duration-200 rotate-0 hover:rotate-45" />
-              ) : (
-                <Moon className="w-5 h-5 text-slate-600 hover:text-indigo-600 transition-transform duration-200" />
-              )}
+              {theme === "light" ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px] text-amber-400" />}
             </button>
 
-            {/* Logout button */}
+            <div className="flex items-center gap-3 border-l border-slate-200 dark:border-slate-800/80 pl-4 ml-1">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.full_name}</span>
+                {getRoleBadge()}
+              </div>
+              <div className="w-9 h-9 rounded-full bg-linear-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-white dark:ring-[#0a0f1c]">
+                {user.full_name.charAt(0)}
+              </div>
+            </div>
+
             <button
               onClick={logout}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-              title="Logout"
+              className="ml-2 p-2 rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 dark:hover:text-red-400 transition-all cursor-pointer group"
+              title="Sign out"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
             </button>
           </div>
         </div>
       </div>
     </nav>
+  </div>
   );
 }

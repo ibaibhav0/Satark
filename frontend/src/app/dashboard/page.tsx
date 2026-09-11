@@ -198,10 +198,14 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Banner */}
-        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-6 mb-8 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl rounded-3xl border border-slate-200/60 dark:border-white/10 p-8 mb-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] relative overflow-hidden">
+          {/* Subtle gradient accent inside banner */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/15 dark:bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-cyan-500/15 dark:bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 Welcome back, {user.full_name}
               </h1>
               <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
@@ -382,10 +386,10 @@ export default function DashboardPage() {
             {/* Card 1: Total Projects */}
             <div
               onClick={() => setSelectedMetric("all")}
-              className={`p-4 rounded-lg border transition-all cursor-pointer select-none ${
+              className={`p-5 rounded-2xl transition-all duration-300 cursor-pointer select-none relative overflow-hidden group ${
                 selectedMetric === "all"
-                  ? "bg-indigo-50/80 dark:bg-indigo-950/60 border-indigo-500 dark:border-indigo-500 shadow-md ring-2 ring-indigo-500/20"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+                  ? "bg-indigo-50/90 dark:bg-indigo-900/40 border border-indigo-500/50 shadow-lg shadow-indigo-500/20 transform scale-[1.02]"
+                  : "bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 hover:border-indigo-400/50 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:shadow-lg hover:-translate-y-1"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -401,10 +405,10 @@ export default function DashboardPage() {
             {/* Card 2: Active Ongoing Projects */}
             <div
               onClick={() => setSelectedMetric("active")}
-              className={`p-4 rounded-lg border transition-all cursor-pointer select-none ${
+              className={`p-5 rounded-2xl transition-all duration-300 cursor-pointer select-none relative overflow-hidden group ${
                 selectedMetric === "active"
-                  ? "bg-emerald-50/80 dark:bg-emerald-950/60 border-emerald-500 dark:border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+                  ? "bg-emerald-50/90 dark:bg-emerald-900/40 border border-emerald-500/50 shadow-lg shadow-emerald-500/20 transform scale-[1.02]"
+                  : "bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 hover:border-emerald-400/50 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:shadow-lg hover:-translate-y-1"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -420,10 +424,10 @@ export default function DashboardPage() {
             {/* Card 3: Critical Risk Projects (>80%) */}
             <div
               onClick={() => setSelectedMetric("critical_risk")}
-              className={`p-4 rounded-lg border transition-all cursor-pointer select-none ${
+              className={`p-5 rounded-2xl transition-all duration-300 cursor-pointer select-none relative overflow-hidden group ${
                 selectedMetric === "critical_risk"
-                  ? "bg-red-50/80 dark:bg-red-950/60 border-red-500 dark:border-red-500 shadow-md ring-2 ring-red-500/20"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+                  ? "bg-red-50/90 dark:bg-red-900/40 border border-red-500/50 shadow-lg shadow-red-500/20 transform scale-[1.02]"
+                  : "bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 hover:border-red-400/50 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:shadow-lg hover:-translate-y-1"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -439,10 +443,10 @@ export default function DashboardPage() {
             {/* Card 4: High Risk Projects (60%-80%) */}
             <div
               onClick={() => setSelectedMetric("high_risk")}
-              className={`p-4 rounded-lg border transition-all cursor-pointer select-none ${
+              className={`p-5 rounded-2xl transition-all duration-300 cursor-pointer select-none relative overflow-hidden group ${
                 selectedMetric === "high_risk"
-                  ? "bg-rose-50/80 dark:bg-rose-950/60 border-rose-500 dark:border-rose-500 shadow-md ring-2 ring-rose-500/20"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+                  ? "bg-rose-50/90 dark:bg-rose-900/40 border border-rose-500/50 shadow-lg shadow-rose-500/20 transform scale-[1.02]"
+                  : "bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 hover:border-rose-400/50 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:shadow-lg hover:-translate-y-1"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -458,10 +462,10 @@ export default function DashboardPage() {
             {/* Card 5: Medium Risk Projects (50%-60%) */}
             <div
               onClick={() => setSelectedMetric("medium_risk")}
-              className={`p-4 rounded-lg border transition-all cursor-pointer select-none ${
+              className={`p-5 rounded-2xl transition-all duration-300 cursor-pointer select-none relative overflow-hidden group ${
                 selectedMetric === "medium_risk"
-                  ? "bg-amber-50/80 dark:bg-amber-950/60 border-amber-500 dark:border-amber-500 shadow-md ring-2 ring-amber-500/20"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+                  ? "bg-amber-50/90 dark:bg-amber-900/40 border border-amber-500/50 shadow-lg shadow-amber-500/20 transform scale-[1.02]"
+                  : "bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 hover:border-amber-400/50 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:shadow-lg hover:-translate-y-1"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -477,10 +481,10 @@ export default function DashboardPage() {
             {/* Card 6: Completed Projects */}
             <div
               onClick={() => setSelectedMetric("completed")}
-              className={`p-4 rounded-lg border transition-all cursor-pointer select-none ${
+              className={`p-5 rounded-2xl transition-all duration-300 cursor-pointer select-none relative overflow-hidden group ${
                 selectedMetric === "completed"
-                  ? "bg-blue-50/80 dark:bg-blue-950/60 border-blue-500 dark:border-blue-500 shadow-md ring-2 ring-blue-500/20"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+                  ? "bg-blue-50/90 dark:bg-blue-900/40 border border-blue-500/50 shadow-lg shadow-blue-500/20 transform scale-[1.02]"
+                  : "bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 hover:border-blue-400/50 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:shadow-lg hover:-translate-y-1"
               }`}
             >
               <div className="flex items-center justify-between">

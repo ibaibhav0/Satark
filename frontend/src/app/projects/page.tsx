@@ -211,7 +211,7 @@ export default function ProjectsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 mb-6 shadow-xs flex flex-col md:flex-row gap-4">
+        <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 mb-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.1)] flex flex-col md:flex-row gap-4 relative overflow-hidden">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <input
@@ -258,7 +258,7 @@ export default function ProjectsPage() {
         </div>
 
         {/* Projects Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.1)] overflow-hidden relative">
           {loading ? (
             <div className="py-16 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
@@ -271,7 +271,7 @@ export default function ProjectsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                <thead className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200/60 dark:border-white/10">
                   <tr>
                     <th className="px-6 py-3.5">Project Code & Name</th>
                     <th className="px-6 py-3.5">District / Locality</th>
