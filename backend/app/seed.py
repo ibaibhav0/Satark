@@ -334,7 +334,7 @@ async def seed():
             geospatial_risk=45,
             evidence_risk=78,
             contractor_risk=65,
-            is_mock=True,
+            is_mock=False,
             explanation=[
                 "Physical progress (42%) significantly lower than financial expenditure (91%)",
                 "3 evidence images show high similarity to historical submissions",
@@ -357,7 +357,7 @@ async def seed():
             geospatial_risk=72,
             evidence_risk=85,
             contractor_risk=65,
-            is_mock=True,
+            is_mock=False,
             explanation=[
                 "94% image similarity detected with evidence from Project MPLADS-KA-2025-0147",
                 "Potential evidence reuse detected — requires review",
@@ -379,7 +379,7 @@ async def seed():
             geospatial_risk=95,
             evidence_risk=82,
             contractor_risk=30,
-            is_mock=True,
+            is_mock=False,
             explanation=[
                 "Evidence captured 2.3 km from project site (geofence: 100m)",
                 "GPS accuracy very low (45m) during 2 of 5 evidence captures",
@@ -399,7 +399,7 @@ async def seed():
             geospatial_risk=8,
             evidence_risk=10,
             contractor_risk=20,
-            is_mock=True,
+            is_mock=False,
             explanation=[
                 "All evidence within project geofence",
                 "Financial and physical progress aligned",
@@ -416,7 +416,7 @@ async def seed():
             geospatial_risk=20,
             evidence_risk=40,
             contractor_risk=35,
-            is_mock=True,
+            is_mock=False,
             explanation=[
                 "Minor financial progress gap (4%)",
                 "Evidence metadata partially unavailable for 1 image",
@@ -432,7 +432,7 @@ async def seed():
             geospatial_risk=5,
             evidence_risk=15,
             contractor_risk=10,
-            is_mock=True,
+            is_mock=False,
             explanation=[
                 "Project completed successfully",
                 "All verifications passed",
@@ -474,6 +474,10 @@ async def seed():
                 evidence_data={"similarity": 94, "matched_project": "MPLADS-KA-2025-0147"},
             ),
             Alert(
+                alert_code="ALT-24KA-003",
+                project_id=proj_b.id,
+                alert_type=AlertType.DUPLICATE_EVIDENCE,
+                severity=AlertSeverity.CRITICAL,
                 title="Potential Evidence Reuse — GHPS Shivajinagar School Renovation",
                 description="Evidence photo shows 91% perceptual hash similarity with photo submitted for school renovation MPLADS/2023-24/KA/BN-03/0201 in prior financial year. Suspected image recycling.",
                 evidence_data={"similarity": 91, "matched_project": "MPLADS/2023-24/KA/BN-03/0201"},
@@ -512,8 +516,7 @@ async def seed():
 
         for proj, days_offset in [
             (proj_a, 195), (proj_b, 130), (proj_c, 165), (proj_d, 155),
-            (proj_e, 210), (proj_f, 280), (proj_g, 80), (proj_h, 15),
-            (proj_i, 145), (proj_j, 310),
+            (proj_e, 210), (proj_f, 280),
         ]:
             db.add(ProjectEvent(
                 project_id=proj.id,
@@ -567,13 +570,6 @@ async def seed():
             title="Project Verified & Marked Complete",
             description="Solar street lighting installation verified complete. All 75 poles erected, energized and handed over to GHMC. Utilization certificate issued.",
             created_at=_days_ago(15),
-        ))
-        db.add(ProjectEvent(
-            project_id=proj_j.id,
-            event_type="project_completed",
-            title="Project Verified & Marked Complete",
-            description="4 additional classrooms and toilet block construction verified complete at Govt. Urdu Primary School, Mandi Mohalla. Physical handover done to school principal.",
-            created_at=_days_ago(20),
         ))
 
         # ── Expense Bills & Invoices ─────────────────────────────────
@@ -686,7 +682,7 @@ async def seed():
         db.add_all([bill_clean, bill_fraud])
 
         await db.commit()
-        print("✓ Database seeded successfully with demo data.")
+        print("[OK] Database seeded successfully with demo data.")
         print("  Accounts:")
         print("    Admin:     admin@satark.gov.in / admin123")
         print("    Inspector: inspector1@satark.gov.in / inspector123  (INS-0042)")

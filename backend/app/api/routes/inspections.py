@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
+import imagehash
+from PIL import Image
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -267,8 +270,77 @@ async def upload_evidence(
     if len(content) > 25 * 1024 * 1024:  # 25 MB limit
         raise HTTPException(status_code=400, detail="File size exceeds 25 MB limit")
 
-    # SHA-256 hash
+    # 1. SHA-256 hash calculation & Exact Duplicate Prevention
     file_hash = hashlib.sha256(content).hexdigest()
+
+    existing_hash_match = await db.execute(
+        select(Evidence, Project)
+        .join(Project, Evidence.project_id == Project.id)
+        .where(Evidence.sha256_hash == file_hash)
+    )
+    dup_row = existing_hash_match.first()
+    if dup_row:
+        existing_ev, existing_proj = dup_row
+        upload_time_str = existing_ev.capture_timestamp.strftime("%d %b %Y, %H:%M UTC") if existing_ev.capture_timestamp else "previously"
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Duplicate image blocked: This identical image has already been uploaded for project "
+                f"'{existing_proj.name}' ({existing_proj.project_code}) on {upload_time_str} (Evidence ID: {existing_ev.evidence_code}). "
+                f"AI Forensics engine prohibits duplicate image reuse."
+            ),
+        )
+
+    # 2. Perceptual Hash Calculation & Cross-Project Visual Duplicate Pre-check
+    incoming_phash = None
+    try:
+        with Image.open(io.BytesIO(content)) as pil_img:
+            try:
+                incoming_phash = imagehash.phash(pil_img)
+            except Exception:
+                incoming_phash = imagehash.dhash(pil_img)
+    except Exception:
+        incoming_phash = None
+
+    if incoming_phash is not None:
+        all_ev_res = await db.execute(
+            select(Evidence, Project).join(Project, Evidence.project_id == Project.id)
+        )
+        for prev_ev, prev_proj in all_ev_res.all():
+            prev_phash_str = (prev_ev.device_info or {}).get("phash")
+            if not prev_phash_str:
+                prev_path = settings.evidence_storage / prev_ev.storage_key
+                if prev_path.exists() and prev_path.is_file():
+                    try:
+                        with Image.open(prev_path) as prev_img:
+                            try:
+                                prev_phash_val = imagehash.phash(prev_img)
+                            except Exception:
+                                prev_phash_val = imagehash.dhash(prev_img)
+                            prev_phash_str = str(prev_phash_val)
+                            prev_info = dict(prev_ev.device_info or {})
+                            prev_info["phash"] = prev_phash_str
+                            prev_ev.device_info = prev_info
+                    except Exception:
+                        pass
+            if prev_phash_str and len(prev_phash_str) == 16:
+                try:
+                    h_prev = imagehash.hex_to_hash(prev_phash_str)
+                    dist = incoming_phash - h_prev
+                    sim_pct = max(0.0, 100.0 - (dist / 64.0) * 100.0)
+                    if sim_pct >= 92.0:
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail=(
+                                f"Duplicate image blocked: AI Perceptual Hash detected this image is {sim_pct:.1f}% "
+                                f"visually identical to existing evidence {prev_ev.evidence_code} in project "
+                                f"'{prev_proj.name}' ({prev_proj.project_code}). Image recycling is blocked."
+                            ),
+                        )
+                except HTTPException:
+                    raise
+                except Exception:
+                    pass
 
     # Generate evidence code
     evidence_code = f"EVD-{uuid.uuid4().hex[:8].upper()}"
@@ -293,6 +365,8 @@ async def upload_evidence(
 
     # Build device info dictionary — carries work-photo classification hints to AI pipeline
     dev_dict: dict = {"raw": device_info} if device_info else {}
+    if incoming_phash is not None:
+        dev_dict["phash"] = str(incoming_phash)
     if is_selfie is not None:
         dev_dict["is_selfie"] = bool(is_selfie)
     if scene_hint:

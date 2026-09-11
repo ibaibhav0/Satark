@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     EVIDENCE_STORAGE_PATH: str = "./storage/evidence"
 
     # AI
-    AI_MOCK_MODE: bool = True
+    AI_MOCK_MODE: bool = False
 
     @property
     def cors_origins_list(self) -> list[str]:

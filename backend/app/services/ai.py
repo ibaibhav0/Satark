@@ -29,23 +29,26 @@ from app.providers.base import (
     SatelliteVerificationResult,
     SimilarityResult,
 )
-from app.providers.mock import (
-    MockFinancialAnomalyProvider,
-    MockImageForensicsProvider,
-    MockRiskEngineProvider,
-    MockSatelliteProvider,
-    MockSimilarityProvider,
+from app.providers.real import (
+    RealFinancialAnomalyProvider,
+    RealImageForensicsProvider,
+    RealRiskEngineProvider,
+    RealSatelliteProvider,
+    RealSimilarityProvider,
 )
 from app.services.audit import log_audit
+from pathlib import Path
+from PIL import Image
+import imagehash
 
 settings = get_settings()
 
-# Initialize providers
-forensics_provider = MockImageForensicsProvider()
-similarity_provider = MockSimilarityProvider()
-financial_provider = MockFinancialAnomalyProvider()
-satellite_provider = MockSatelliteProvider()
-risk_provider = MockRiskEngineProvider()
+# Initialize real AI providers
+forensics_provider = RealImageForensicsProvider()
+similarity_provider = RealSimilarityProvider()
+financial_provider = RealFinancialAnomalyProvider()
+satellite_provider = RealSatelliteProvider()
+risk_provider = RealRiskEngineProvider()
 
 
 async def analyze_project_evidence(
@@ -69,6 +72,21 @@ async def analyze_project_evidence(
         }
     )
 
+    # Extract perceptual hash for visual duplicate search
+    phash_str = (device_info or {}).get("phash")
+    if not phash_str and Path(file_path).exists():
+        try:
+            with Image.open(file_path) as p_img:
+                try:
+                    phash_str = str(imagehash.phash(p_img))
+                except Exception:
+                    phash_str = str(imagehash.dhash(p_img))
+                d_info = dict(evidence.device_info or {})
+                d_info["phash"] = phash_str
+                evidence.device_info = d_info
+        except Exception:
+            pass
+
     # 2. Similarity search against historical evidence pool
     hist_result = await db.execute(
         select(Evidence, Project)
@@ -83,12 +101,13 @@ async def analyze_project_evidence(
             "project_name": p.name,
             "capture_date": e.capture_timestamp.isoformat(),
             "hash": e.sha256_hash,
+            "phash": (e.device_info or {}).get("phash"),
             "force_duplicate": p.project_code == "MPLADS-KA-2025-0147" and project.project_code == "MPLADS-KA-2025-0203",
         }
         for e, p in hist_result.all()
     ]
     similarity: SimilarityResult = await similarity_provider.check_similarity(
-        evidence.sha256_hash,
+        phash_str or evidence.sha256_hash,
         str(project.id),
         historical_pool,
     )
@@ -105,12 +124,12 @@ async def analyze_project_evidence(
             duplicate_score=similarity.max_similarity,
             duplicate_matches=[m.model_dump() for m in similarity.matches],
             overall_risk=max(forensics.risk_score, similarity.max_similarity),
-            analysis_metadata={"summary": forensics.summary, "similarity_summary": similarity.summary},
+            analysis_metadata={"summary": forensics.summary, "similarity_summary": similarity.summary, "phash": phash_str},
             is_work_photo=forensics.is_work_photo,
             detected_category=forensics.detected_category,
             work_match_confidence=forensics.work_match_confidence,
             requires_peer_acceptance=forensics.requires_peer_acceptance,
-            is_mock=True,
+            is_mock=False,
         )
         db.add(analysis)
     else:
@@ -123,6 +142,7 @@ async def analyze_project_evidence(
         analysis.detected_category = forensics.detected_category
         analysis.work_match_confidence = forensics.work_match_confidence
         analysis.requires_peer_acceptance = forensics.requires_peer_acceptance
+        analysis.is_mock = False
 
     # Handle Non-work photo / selfie requirement for peer acceptance
     if forensics.requires_peer_acceptance:
@@ -278,7 +298,7 @@ async def evaluate_project_risk(
         contractor_risk=composite.contractor_risk,
         explanation=composite.explanation_points,
         contributing_factors=composite.contributing_factors,
-        is_mock=True,
+        is_mock=False,
     )
     db.add(risk_score)
 
