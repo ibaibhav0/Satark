@@ -43,7 +43,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold text-slate-900 dark:text-white">SATARK-MPLADS</h1>
           </div>
           <p className="text-slate-600 dark:text-slate-400 text-lg">Evidence-driven MPLADS Monitoring & Fraud Detection Platform</p>
-          <p className="text-slate-500 dark:text-slate-500 text-sm mt-1">Smart India Hackathon 2026 — Problem Statement 102</p>
+          <p className="text-slate-500 dark:text-slate-500 text-sm mt-1">Secure Access Portal for Authorized Personnel</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -91,8 +91,8 @@ export default function LoginPage() {
 
           {/* Quick Demo Login */}
           <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md border border-slate-200 dark:border-slate-800 p-8">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Demo Quick Login</h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">SIH 2026 Demo — Click any role to login instantly</p>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Authorized Login Profiles</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Select your designated role to continue securely</p>
             <div className="space-y-2">
               {(Object.keys(DEMO_CREDENTIALS) as Array<keyof typeof DEMO_CREDENTIALS>).map((role) => (
                 <button
@@ -111,7 +111,7 @@ export default function LoginPage() {
 
         <div className="text-center mt-8 text-sm text-slate-500 dark:text-slate-400">
           <p>Government of India — Ministry of Statistics and Programme Implementation</p>
-          <p className="mt-1">All rights reserved © 2026</p>
+          <p className="mt-1">National Informatics Centre © 2024-25</p>
         </div>
       </div>
     </div>

@@ -109,7 +109,7 @@ export default function ProjectsPage() {
       await api.createProject(formData);
       setShowModal(false);
       setFormData({
-        project_code: `MPLADS-KA-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        project_code: `MPLADS/2024-25/KA/BN-01/${Math.floor(1000 + Math.random() * 9000)}`,
         name: "",
         description: "",
         project_type: "road",
