@@ -7,6 +7,8 @@ Implements realistic mock responses with deterministic anomaly injection for dem
 from __future__ import annotations
 
 import random
+import os
+import cv2
 from typing import Any
 
 from app.providers.base import (
@@ -29,15 +31,28 @@ class MockImageForensicsProvider(ImageForensicsProvider):
         meta = metadata or {}
         is_suspicious = meta.get("force_suspicious", False)
         project_type = meta.get("project_type", "infrastructure")
-        scene_hint = meta.get("scene_hint", "").lower()
         file_lower = file_path.lower()
 
-        # Check for selfie or non-work photo simulation/detection
-        is_selfie = (
-            meta.get("is_selfie", False)
-            or scene_hint in ("selfie", "person", "portrait", "non_work", "avatar")
-            or any(term in file_lower for term in ("selfie", "portrait", "face", "avatar", "non_work", "dummy"))
-        )
+        # Real OpenCV Face Detection to determine if the photo is a selfie/portrait
+        is_selfie = False
+        try:
+            if os.path.exists(file_path):
+                img = cv2.imread(file_path)
+                if img is not None:
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
+                    
+                    for (x, y, w, h) in faces:
+                        # If a detected face is significantly large (e.g., >2% of image area), it's a selfie
+                        img_area = img.shape[0] * img.shape[1]
+                        if (w * h) / img_area > 0.02:
+                            is_selfie = True
+                            break
+        except Exception as e:
+            print(f"OpenCV face detection failed: {e}")
+            # Fallback to metadata if OpenCV fails
+            is_selfie = meta.get("is_selfie", False)
 
         if is_selfie:
             return ForensicsResult(

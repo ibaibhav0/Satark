@@ -98,8 +98,6 @@ export function LiveCameraModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Scene type hint for AI work-photo classification
-  const [sceneType, setSceneType] = useState<"work_site" | "selfie" | "other">("work_site");
   // AI classification result for last uploaded photo
   interface AIClassResult { is_work_photo: boolean; detected_category: string | null; confidence: number | null; requires_peer: boolean; }
   const [lastAIResult, setLastAIResult] = useState<AIClassResult | null>(null);
@@ -265,13 +263,9 @@ export function LiveCameraModal({
       formData.append("capture_latitude", lat.toString());
       formData.append("longitude", lng.toString());
       formData.append("capture_longitude", lng.toString());
-      formData.append("gps_accuracy", accuracy.toString());
       formData.append("sha256_hash", hash);
       formData.append("device_info", navigator.userAgent);
-      // Pass scene classification hints to AI pipeline
-      formData.append("is_selfie", (sceneType === "selfie").toString());
-      formData.append("scene_hint", sceneType === "selfie" ? "selfie" : sceneType === "other" ? "non_work" : "");
-
+      
       const res = await api.uploadEvidence(activeInspId, formData);
 
       // Store AI classification result for display
@@ -553,29 +547,6 @@ export function LiveCameraModal({
                     <p className="text-[11px] text-red-300 mt-2 font-mono">
                       Current Distance: {geofenceDistance}m • Geofence Radius: {project.inspection_radius_m}m
                     </p>
-                  </div>
-                )}
-
-                {/* Scene Type Selector (shown only when inside geofence) */}
-                {isWithinGeofence && (
-                  <div className="absolute bottom-16 left-0 right-0 flex items-center justify-center gap-2 z-10 px-4">
-                    <span className="text-[10px] font-semibold text-white/80 uppercase tracking-wide">Photo Type:</span>
-                    {(["work_site", "selfie", "other"] as const).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setSceneType(type)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all cursor-pointer ${
-                          sceneType === type
-                            ? type === "work_site"
-                              ? "bg-emerald-500 text-white shadow-md"
-                              : "bg-red-500 text-white shadow-md"
-                            : "bg-slate-900/70 text-white/70 hover:bg-slate-800/90"
-                        }`}
-                      >
-                        {type === "work_site" ? "✓ Work Site" : type === "selfie" ? "⚠ Selfie" : "Other"}
-                      </button>
-                    ))}
                   </div>
                 )}
 
